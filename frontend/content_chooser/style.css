@@ -224,21 +224,19 @@ body, html {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(30, 144, 198, 0.18);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 1000;
 }
 .modal-window {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 24px rgba(30,144,198,0.18);
-  padding: 36px 48px;
   min-width: 320px;
   min-height: 120px;
+  position: absolute;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  resize: both;
+  overflow: auto;
 }
 .modal-placeholder {
   color: #1e90c6;
@@ -247,25 +245,29 @@ body, html {
 }
 
 .chooser-modal {
-  min-width: 900px;
-  min-height: 480px;
-  padding: 0;
+  min-width: 600px;
+  min-height: 400px;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 800px;
+  height: 600px;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 1100px;
+  padding: 0;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 .chooser-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  font-size: 22px;
-  font-weight: 500;
-  padding: 24px 32px 8px 32px;
+  padding: 12px 18px;
   border-bottom: 1px solid #e5e5e5;
-  width: 100%;
-  box-sizing: border-box;
+  cursor: move;
+  user-select: none;
+  background: #f7fbfd;
+  border-radius: 10px 10px 0 0;
 }
 .chooser-header span {
   flex: 1;

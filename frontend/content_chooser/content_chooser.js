@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './style.css';
 import chooserData from './chooser_data.json';
 
@@ -20,6 +20,57 @@ const ICONS = {
 function ContentItemChooserModal({ onClose, onAdd, onAddAndClose }) {
   const [items] = useState(chooserData);
   const [selected, setSelected] = useState([]);
+  const modalRef = useRef(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    // Position the modal relative to the form section
+    const formSection = document.querySelector('.form-section');
+    if (formSection && modalRef.current) {
+      const formRect = formSection.getBoundingClientRect();
+      const modalRect = modalRef.current.getBoundingClientRect();
+      setPosition({
+        x: formRect.right - modalRect.width - 20,
+        y: formRect.top + 20
+      });
+    }
+  }, []);
+
+  const handleMouseDown = (e) => {
+    if (e.target.closest('.chooser-header')) {
+      setIsDragging(true);
+      dragStartPos.current = {
+        x: e.clientX - position.x,
+        y: e.clientY - position.y
+      };
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      setPosition({
+        x: e.clientX - dragStartPos.current.x,
+        y: e.clientY - dragStartPos.current.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging]);
 
   const toggleSelect = (idx) => {
     setSelected((sel) =>
@@ -29,7 +80,17 @@ function ContentItemChooserModal({ onClose, onAdd, onAddAndClose }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-window chooser-modal" onClick={e => e.stopPropagation()}>
+      <div 
+        ref={modalRef}
+        className="modal-window chooser-modal" 
+        onClick={e => e.stopPropagation()}
+        onMouseDown={handleMouseDown}
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          transform: 'none'
+        }}
+      >
         {/* Title row */}
         <div className="chooser-header">
           <span>Content Item Chooser</span>
