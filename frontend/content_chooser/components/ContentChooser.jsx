@@ -4,6 +4,33 @@ import chooserData from '../chooser_data.json';
 import { MIN_WIDTH } from '../constants';
 import ContentItemChooserModal from './ContentItemChooserModal';
 
+// Function to generate a consistent color based on item properties
+const getItemColor = (item) => {
+  // Create a hash from the item's name and type
+  const hash = `${item.name}${item.type}`.split('').reduce((acc, char) => {
+    return char.charCodeAt(0) + ((acc << 5) - acc);
+  }, 0);
+  
+  // Array of visually distinct colors
+  const colors = [
+    '#FFB74D', // Orange
+    '#4FC3F7', // Light Blue
+    '#81C784', // Green
+    '#BA68C8', // Purple
+    '#F06292', // Pink
+    '#FF8A65', // Coral
+    '#64B5F6', // Blue
+    '#4DB6AC', // Teal
+    '#FFD54F', // Yellow
+    '#A1887F', // Brown
+    '#90A4AE', // Blue Grey
+    '#7986CB', // Indigo
+  ];
+  
+  // Use the hash to select a color
+  return colors[Math.abs(hash) % colors.length];
+};
+
 const ContentChooser = () => {
   const [formWidth, setFormWidth] = useState(window.innerWidth / 2);
   const dragging = useRef(false);
@@ -132,17 +159,26 @@ const ContentChooser = () => {
               <button title="Paste" onClick={handlePaste} disabled={clipboard.length === 0}>📥</button>
               <button title="Add" onClick={() => setModalOpen(true)}>＋</button>
             </div>
-            {selectedMedia.map((item, index) => (
-              <div
-                key={index}
-                className={`media-link${isSelected(index) ? ' selected' : ''}`}
-                onClick={() => toggleMediaSelect(index)}
-                style={{ border: isSelected(index) ? '2px solid #1e90c6' : undefined }}
-              >
-                <div className="media-thumb" />
-                <span>{item.name}</span>
-              </div>
-            ))}
+            {selectedMedia.map((item, index) => {
+              const itemColor = getItemColor(item);
+              return (
+                <div
+                  key={index}
+                  className={`media-link${isSelected(index) ? ' selected' : ''}`}
+                  onClick={() => toggleMediaSelect(index)}
+                  style={{ border: isSelected(index) ? '2px solid #1e90c6' : undefined }}
+                >
+                  <div 
+                    className="media-thumb"
+                    style={{
+                      background: `repeating-linear-gradient(45deg, ${itemColor}, ${itemColor} 8px, #eaf6fb 8px, #eaf6fb 16px)`,
+                      borderColor: itemColor
+                    }}
+                  />
+                  <span>{item.name}</span>
+                </div>
+              );
+            })}
             <input className="media-search" placeholder="Type here to search or drag and drop content onto this area." disabled />
           </div>
         </div>
@@ -160,7 +196,15 @@ const ContentChooser = () => {
           style={{ width: `calc(100% - ${formWidth}px)`, minWidth: MIN_WIDTH }}
         >
           <div className="preview-title">THIS IS CHRIS - HE STARTED HIS OWN RESTAURANT IN CAPE TOWN</div>
-          <div className="preview-image-placeholder" />
+          {selectedMedia.length > 0 && (
+            <div 
+              className="preview-image-placeholder"
+              style={{
+                background: `repeating-linear-gradient(45deg, ${getItemColor(selectedMedia[0])}, ${getItemColor(selectedMedia[0])} 16px, #eaf6fb 16px, #eaf6fb 32px)`,
+                borderColor: getItemColor(selectedMedia[0])
+              }}
+            />
+          )}
           <div className="preview-text">
             Productivity and experience enhancements are made possible by Chef Corp. Integrated Technology for a Seamless Guest Experience. This interconnected system of handheld ordering and payment devices as well as kitchen order display and inquire devices enables your kitchen staff to go to work while the order is still being placed.<br /><br />
             In high class restaurants, waiters are proud to memorize your order and even your special wishes by heart. If your staff is on that level, don't read any further. Most waiters, though, rely on pen and paper which are still staples of the restaurant world today. There is nothing wrong with that, since this is often still the most effective means of getting the order to the kitchen and keep everything organized until the bill has to be produced.<br /><br />
