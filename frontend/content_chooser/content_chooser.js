@@ -110,6 +110,10 @@ function ContentItemChooserModal({ onClose, onAdd, onAddAndClose }) {
 const ContentChooser = () => {
   const [formWidth, setFormWidth] = useState(window.innerWidth / 2);
   const dragging = useRef(false);
+  const [selectedMedia, setSelectedMedia] = useState([]);
+  const [mediaSelection, setMediaSelection] = useState([]);
+  const [clipboard, setClipboard] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
 
   React.useEffect(() => {
     const handleMouseMove = (e) => {
@@ -134,11 +138,40 @@ const ContentChooser = () => {
     document.body.style.cursor = 'col-resize';
   };
 
-  const [modalOpen, setModalOpen] = useState(false);
+  const handleAdd = (selectedIndices) => {
+    const newItems = selectedIndices.map(idx => chooserData[idx]);
+    setSelectedMedia(prev => [...prev, ...newItems]);
+  };
 
-  // Dummy handlers for add/add&close
-  const handleAdd = () => {};
-  const handleAddAndClose = () => setModalOpen(false);
+  const handleAddAndClose = (selectedIndices) => {
+    handleAdd(selectedIndices);
+    setModalOpen(false);
+  };
+
+  const handleDelete = () => {
+    setSelectedMedia(prev => prev.filter((_, idx) => !mediaSelection.includes(idx)));
+    setMediaSelection([]);
+  };
+  const handleCut = () => {
+    setClipboard(selectedMedia.filter((_, idx) => mediaSelection.includes(idx)));
+    setSelectedMedia(prev => prev.filter((_, idx) => !mediaSelection.includes(idx)));
+    setMediaSelection([]);
+  };
+  const handleCopy = () => {
+    setClipboard(selectedMedia.filter((_, idx) => mediaSelection.includes(idx)));
+  };
+  const handlePaste = () => {
+    if (clipboard.length > 0) {
+      setSelectedMedia(prev => [...prev, ...clipboard]);
+    }
+  };
+
+  const toggleMediaSelect = (idx) => {
+    setMediaSelection(sel =>
+      sel.includes(idx) ? sel.filter(i => i !== idx) : [...sel, idx]
+    );
+  };
+  const isSelected = idx => mediaSelection.includes(idx);
 
   return (
     <div className="studio-root">
@@ -195,10 +228,24 @@ const ContentChooser = () => {
           {/* Pictures and Other Media */}
           <div className="form-group expanded">
             <div className="form-group-title">Pictures and Other Media</div>
-            <div className="media-link" onClick={() => setModalOpen(true)}>
-              <div className="media-thumb" />
-              <span>Young Chef in Kitchen Picture</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '8px 18px 0 18px' }}>
+              <button title="Delete" onClick={handleDelete} disabled={mediaSelection.length === 0}>🗑️</button>
+              <button title="Cut" onClick={handleCut} disabled={mediaSelection.length === 0}>✂️</button>
+              <button title="Copy" onClick={handleCopy} disabled={mediaSelection.length === 0}>📋</button>
+              <button title="Paste" onClick={handlePaste} disabled={clipboard.length === 0}>📥</button>
+              <button title="Add" onClick={() => setModalOpen(true)}>＋</button>
             </div>
+            {selectedMedia.map((item, index) => (
+              <div
+                key={index}
+                className={`media-link${isSelected(index) ? ' selected' : ''}`}
+                onClick={() => toggleMediaSelect(index)}
+                style={{ border: isSelected(index) ? '2px solid #1e90c6' : undefined }}
+              >
+                <div className="media-thumb" />
+                <span>{item.name}</span>
+              </div>
+            ))}
             <input className="media-search" placeholder="Type here to search or drag and drop content onto this area." disabled />
           </div>
         </div>
