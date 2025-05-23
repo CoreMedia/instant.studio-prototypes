@@ -1,0 +1,8 @@
+[
+  {"type": "Folder", "name": "Folder A", "creationDate": "2023/08/23 7:33 PM", "state": "Checked In"},
+  {"type": "Folder", "name": "Folder B", "creationDate": "2023/08/23 7:33 PM", "state": "Checked In"},
+  {"type": "Article", "name": "10 Tips for the Perfect Evening Dress", "creationDate": "2023/08/23 7:33 PM", "state": "Published"},
+  {"type": "Article", "name": "Clothes mean nothing until someone lives in them", "creationDate": "2023/08/23 7:33 PM", "state": "Published"},
+  {"type": "Article", "name": "Fashions fade, style is eternal", "creationDate": "2023/08/23 7:33 PM", "state": "Checked Out"},
+  {"type": "Article", "name": "Gold is the new trend 2018", "creationDate": "2023/08/23 7:33 PM", "state": "Published"}
+] 

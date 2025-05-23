@@ -1,7 +1,110 @@
 import React, { useState, useRef } from 'react';
 import './style.css';
+import chooserData from './chooser_data.json';
 
 const MIN_WIDTH = 200;
+
+const ICONS = {
+  Folder: '📁',
+  Article: '📄',
+  Picture: '🖼️',
+  Teaser: '📝',
+  Video: '🎬',
+  'Checked In': '🔒',
+  'Checked Out': '🔓',
+  Approved: '✔️',
+  Published: '🌍',
+  Deleted: '❌',
+};
+
+function ContentItemChooserModal({ onClose, onAdd, onAddAndClose }) {
+  const [items] = useState(chooserData);
+  const [selected, setSelected] = useState([]);
+
+  const toggleSelect = (idx) => {
+    setSelected((sel) =>
+      sel.includes(idx) ? sel.filter((i) => i !== idx) : [...sel, idx]
+    );
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-window chooser-modal" onClick={e => e.stopPropagation()}>
+        {/* Title row */}
+        <div className="chooser-header">
+          <span>Content Item Chooser</span>
+          <button className="chooser-close" onClick={onClose}>✕</button>
+        </div>
+        {/* Toolbar row */}
+        <div className="chooser-toolbar">
+          <button className="chooser-toolbar-btn" title="Back">←</button>
+          <button className="chooser-toolbar-btn" title="Forward">→</button>
+          <div className="chooser-toolbar-btn-group">
+            <button className="active">📂</button>
+            <button disabled>🔍</button>
+          </div>
+          <select className="chooser-type-filter" disabled>
+            <option>All</option>
+            <option>Folder</option>
+            <option>Article</option>
+            <option>Picture</option>
+            <option>Teaser</option>
+            <option>Video</option>
+          </select>
+          <input className="chooser-search" placeholder="Search" disabled />
+          <div className="chooser-view-btn-group">
+            <button className="active" title="List view">☰</button>
+            <button title="Thumbnail view" disabled>▦</button>
+          </div>
+        </div>
+        {/* Breadcrumb */}
+        <div className="chooser-breadcrumb">
+          Chef Corp. / Editorial / <b>Downloads</b>
+        </div>
+        {/* Grid */}
+        <div className="chooser-grid-container">
+          <table className="chooser-grid">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Created</th>
+                <th>State</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, idx) => (
+                <tr
+                  key={idx}
+                  className={selected.includes(idx) ? 'selected' : ''}
+                  onClick={() => toggleSelect(idx)}
+                >
+                  <td><span className="chooser-icon">{ICONS[item.type] || '❓'}</span> {item.type}</td>
+                  <td>{item.name}</td>
+                  <td>{item.creationDate}</td>
+                  <td><span className="chooser-icon">{ICONS[item.state] || '❓'}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* Footer */}
+        <div className="chooser-footer">
+          <span>{items.length} items</span>
+          <div className="chooser-footer-btns">
+            <button onClick={onClose}>Cancel</button>
+            <button disabled={selected.length === 0} onClick={() => onAdd(selected)}>
+              Add
+            </button>
+            <button disabled={selected.length === 0} onClick={() => onAddAndClose(selected)}>
+              Add & Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const ContentChooser = () => {
   const [formWidth, setFormWidth] = useState(window.innerWidth / 2);
@@ -31,6 +134,10 @@ const ContentChooser = () => {
   };
 
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Dummy handlers for add/add&close
+  const handleAdd = () => {};
+  const handleAddAndClose = () => setModalOpen(false);
 
   return (
     <div className="studio-root">
@@ -119,11 +226,11 @@ const ContentChooser = () => {
 
       {/* Modal for Content Item Chooser */}
       {modalOpen && (
-        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="modal-window" onClick={e => e.stopPropagation()}>
-            <div className="modal-placeholder">Content item chooser</div>
-          </div>
-        </div>
+        <ContentItemChooserModal
+          onClose={() => setModalOpen(false)}
+          onAdd={handleAdd}
+          onAddAndClose={handleAddAndClose}
+        />
       )}
     </div>
   );
