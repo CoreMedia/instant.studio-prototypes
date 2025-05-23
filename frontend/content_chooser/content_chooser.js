@@ -43,6 +43,7 @@ function ContentItemChooserModal({ onClose, onAdd, onAddAndClose }) {
             <button className="active">📂</button>
             <button disabled>🔍</button>
           </div>
+          <div className="chooser-toolbar-spacer" />
           <select className="chooser-type-filter" disabled>
             <option>All</option>
             <option>Folder</option>
