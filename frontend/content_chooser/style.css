@@ -417,6 +417,10 @@ body, html {
 .chooser-icon {
   font-size: 18px;
   margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  height: 1em;
 }
 .chooser-footer {
   display: flex;
@@ -560,6 +564,9 @@ body, html {
 .folder-tree-icon {
   margin: 0 6px;
   font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
 }
 
 .folder-tree-name {
