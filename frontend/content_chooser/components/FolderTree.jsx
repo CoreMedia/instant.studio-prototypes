@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ICONS } from '../constants';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
 const FolderTree = ({ folders, currentFolder, onFolderSelect, initialExpandedFolders = new Set() }) => {
   const [expandedFolders, setExpandedFolders] = useState(initialExpandedFolders);
@@ -47,7 +47,7 @@ const FolderTree = ({ folders, currentFolder, onFolderSelect, initialExpandedFol
           >
             {children.length > 0 ? (isExpanded ? '▼' : '▶') : ' '}
           </span>
-          <span className="folder-tree-icon">{ICONS.Folder}</span>
+          <span className="folder-tree-icon"><FolderOutlinedIcon /></span>
           <span className="folder-tree-name">{folder.name}</span>
         </div>
         {isExpanded && children.length > 0 && (

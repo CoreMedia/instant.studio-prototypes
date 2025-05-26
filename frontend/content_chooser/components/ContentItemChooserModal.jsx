@@ -1,6 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ICONS } from '../constants';
 import FolderTree from './FolderTree';
+import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
+import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
+import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
+import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
+import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
+import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined';
+import ChevronLeftOutlinedIcon from '@mui/icons-material/ChevronLeftOutlined';
+import ChevronRightOutlinedIcon from '@mui/icons-material/ChevronRightOutlined';
+import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
+import SmartDisplayOutlinedIcon from '@mui/icons-material/SmartDisplayOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
+import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
 
 const STORAGE_KEY = 'content_chooser_state';
 
@@ -187,7 +205,7 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
         {/* Title row */}
         <div className="chooser-header">
           <span>Content Item Chooser</span>
-          <button className="chooser-close" onClick={onClose}>✕</button>
+          <button className="chooser-close" onClick={onClose}><CloseOutlinedIcon /></button>
         </div>
         {/* Toolbar row */}
         <div className="chooser-toolbar">
@@ -195,11 +213,11 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
           <button className="chooser-toolbar-btn" title="Back" onClick={() => {
             const parent = folders.find(f => f.id === currentFolder)?.parent;
             if (parent) setCurrentFolder(parent);
-          }} disabled={currentFolder === 'root'}>←</button>
-          <button className="chooser-toolbar-btn" title="Forward" disabled>→</button>
+          }} disabled={currentFolder === 'root'}><ArrowBackOutlinedIcon /></button>
+          <button className="chooser-toolbar-btn" title="Forward" disabled><ArrowForwardOutlinedIcon /></button>
           <div className="chooser-toolbar-btn-group">
-            <button className="active">📂</button>
-            <button disabled>🔍</button>
+            <button className="active"><FolderOutlinedIcon /></button>
+            <button disabled><SearchOutlinedIcon /></button>
           </div>
           <div className="chooser-toolbar-spacer" />
           <select className="chooser-type-filter" disabled>
@@ -212,8 +230,8 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
           </select>
           <input className="chooser-search" placeholder="Search" disabled />
           <div className="chooser-view-btn-group">
-            <button className="active" title="List view">☰</button>
-            <button title="Thumbnail view" disabled>▦</button>
+            <button className="active" title="List view"><MenuOutlinedIcon /></button>
+            <button title="Thumbnail view" disabled><GridViewOutlinedIcon /></button>
           </div>
         </div>
 
@@ -229,7 +247,7 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
               onClick={() => setIsTreeExpanded(!isTreeExpanded)}
               title={isTreeExpanded ? "Collapse tree" : "Expand tree"}
             >
-              {isTreeExpanded ? '◀' : '▶'}
+              {isTreeExpanded ? <ChevronLeftOutlinedIcon /> : <ChevronRightOutlinedIcon />}
             </button>
             {isTreeExpanded && (
               <FolderTree
@@ -292,10 +310,24 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
                         onClick={() => toggleSelect(realIdx)}
                         onDoubleClick={() => handleRowDoubleClick(item, realIdx)}
                       >
-                        <td><span className="chooser-icon">{ICONS[item.type] || '❓'}</span> {item.type}</td>
+                        <td><span className="chooser-icon">{
+                          item.type === 'Folder' ? <FolderOutlinedIcon /> :
+                          item.type === 'Article' ? <DescriptionOutlinedIcon /> :
+                          item.type === 'Picture' ? <ImageOutlinedIcon /> :
+                          item.type === 'Teaser' ? <EditNoteOutlinedIcon /> :
+                          item.type === 'Video' ? <SmartDisplayOutlinedIcon /> :
+                          <HelpOutlineOutlinedIcon />
+                        }</span> {item.type}</td>
                         <td>{item.name}</td>
                         <td>{item.creationDate}</td>
-                        <td><span className="chooser-icon">{ICONS[item.state] || '❓'}</span></td>
+                        <td><span className="chooser-icon">{
+                          item.state === 'Checked In' ? <LockOutlinedIcon /> :
+                          item.state === 'Checked Out' ? <LockOpenOutlinedIcon /> :
+                          item.state === 'Approved' ? <CheckCircleOutlinedIcon /> :
+                          item.state === 'Published' ? <PublicOutlinedIcon /> :
+                          item.state === 'Deleted' ? <DeleteOutlineOutlinedIcon /> :
+                          <HelpOutlineOutlinedIcon />
+                        }</span></td>
                       </tr>
                     );
                   })}
