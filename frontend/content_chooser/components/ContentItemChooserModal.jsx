@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ICONS } from '../constants';
+import FolderTree from './FolderTree';
 
 const getFolderPath = (folders, currentId) => {
   const path = [];
@@ -20,6 +21,8 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
+  const [treeWidth, setTreeWidth] = useState(25); // percentage
+  const isDraggingSeparator = useRef(false);
 
   useEffect(() => {
     // Center the modal in the viewport
@@ -48,15 +51,28 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
         x: e.clientX - dragStartPos.current.x,
         y: e.clientY - dragStartPos.current.y
       });
+    } else if (isDraggingSeparator.current) {
+      const modalRect = modalRef.current.getBoundingClientRect();
+      const newWidth = ((e.clientX - modalRect.left) / modalRect.width) * 100;
+      setTreeWidth(Math.max(20, Math.min(40, newWidth)));
     }
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
+    isDraggingSeparator.current = false;
+    document.body.style.cursor = '';
+  };
+
+  const handleSeparatorMouseDown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDraggingSeparator.current = true;
+    document.body.style.cursor = 'col-resize';
   };
 
   useEffect(() => {
-    if (isDragging) {
+    if (isDragging || isDraggingSeparator.current) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
       return () => {
@@ -64,7 +80,7 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
         window.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging]);
+  }, [isDragging, isDraggingSeparator.current]);
 
   // Filter for current folder
   const subfolders = folders.filter(f => f.parent === currentFolder);
@@ -148,56 +164,80 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
             <button title="Thumbnail view" disabled>▦</button>
           </div>
         </div>
-        {/* Breadcrumb */}
-        <div className="chooser-breadcrumb">
-          {path.map((folder, idx) => (
-            <span key={folder.id}>
-              {idx > 0 && ' / '}
-              <a
-                href="#"
-                style={{ color: idx === path.length - 1 ? '#222' : '#1e90c6', textDecoration: idx === path.length - 1 ? 'none' : 'underline', cursor: idx === path.length - 1 ? 'default' : 'pointer' }}
-                onClick={e => {
-                  e.preventDefault();
-                  if (idx !== path.length - 1) handleBreadcrumbClick(folder.id);
-                }}
-              >
-                {folder.name}
-              </a>
-            </span>
-          ))}
-        </div>
-        {/* Grid */}
-        <div className="chooser-grid-container">
-          <table className="chooser-grid">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Name</th>
-                <th>Created</th>
-                <th>State</th>
-              </tr>
-            </thead>
-            <tbody>
-              {gridItems.map((item, idx) => {
-                // Find the index in the original items array
-                const realIdx = items.findIndex(i => i === item);
-                return (
-                  <tr
-                    key={realIdx}
-                    className={selected.includes(realIdx) ? 'selected' : ''}
-                    onClick={() => toggleSelect(realIdx)}
-                    onDoubleClick={() => handleRowDoubleClick(item, realIdx)}
+
+        {/* Split view */}
+        <div className="chooser-split-view">
+          {/* Tree section */}
+          <div className="chooser-tree-section" style={{ width: `${treeWidth}%` }}>
+            <FolderTree
+              folders={folders}
+              currentFolder={currentFolder}
+              onFolderSelect={setCurrentFolder}
+            />
+          </div>
+
+          {/* Separator */}
+          <div
+            className="chooser-split-separator"
+            onMouseDown={handleSeparatorMouseDown}
+          />
+
+          {/* Content section */}
+          <div className="chooser-content-section">
+            {/* Breadcrumb */}
+            <div className="chooser-breadcrumb">
+              {path.map((folder, idx) => (
+                <span key={folder.id}>
+                  {idx > 0 && ' / '}
+                  <a
+                    href="#"
+                    style={{ color: idx === path.length - 1 ? '#222' : '#1e90c6', textDecoration: idx === path.length - 1 ? 'none' : 'underline', cursor: idx === path.length - 1 ? 'default' : 'pointer' }}
+                    onClick={e => {
+                      e.preventDefault();
+                      if (idx !== path.length - 1) handleBreadcrumbClick(folder.id);
+                    }}
                   >
-                    <td><span className="chooser-icon">{ICONS[item.type] || '❓'}</span> {item.type}</td>
-                    <td>{item.name}</td>
-                    <td>{item.creationDate}</td>
-                    <td><span className="chooser-icon">{ICONS[item.state] || '❓'}</span></td>
+                    {folder.name}
+                  </a>
+                </span>
+              ))}
+            </div>
+
+            {/* Grid */}
+            <div className="chooser-grid-container">
+              <table className="chooser-grid">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Created</th>
+                    <th>State</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {gridItems.map((item, idx) => {
+                    // Find the index in the original items array
+                    const realIdx = items.findIndex(i => i === item);
+                    return (
+                      <tr
+                        key={realIdx}
+                        className={selected.includes(realIdx) ? 'selected' : ''}
+                        onClick={() => toggleSelect(realIdx)}
+                        onDoubleClick={() => handleRowDoubleClick(item, realIdx)}
+                      >
+                        <td><span className="chooser-icon">{ICONS[item.type] || '❓'}</span> {item.type}</td>
+                        <td>{item.name}</td>
+                        <td>{item.creationDate}</td>
+                        <td><span className="chooser-icon">{ICONS[item.state] || '❓'}</span></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
+
         {/* Footer */}
         <div className="chooser-footer">
           <span>{gridItems.length} items</span>
