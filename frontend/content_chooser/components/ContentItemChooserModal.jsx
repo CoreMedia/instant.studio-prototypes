@@ -1,7 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ICONS } from '../constants';
 
+const getFolderPath = (folders, currentId) => {
+  const path = [];
+  let curr = folders.find(f => f.id === currentId);
+  while (curr) {
+    path.unshift(curr);
+    curr = curr.parent ? folders.find(f => f.id === curr.parent) : null;
+  }
+  return path;
+};
+
 const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
+  // Folders and content items
+  const folders = items.filter(i => i.type === 'Folder');
+  const [currentFolder, setCurrentFolder] = useState('root');
   const [selected, setSelected] = useState([]);
   const modalRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -53,6 +66,37 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
     }
   }, [isDragging]);
 
+  // Filter for current folder
+  const subfolders = folders.filter(f => f.parent === currentFolder);
+  const contentItems = items.filter(i => i.parent === currentFolder && i.type !== 'Folder');
+
+  // Sort: folders by name, then content by type then name
+  subfolders.sort((a, b) => a.name.localeCompare(b.name));
+  contentItems.sort((a, b) => {
+    if (a.type !== b.type) return a.type.localeCompare(b.type);
+    return a.name.localeCompare(b.name);
+  });
+  const gridItems = [...subfolders, ...contentItems];
+
+  // Breadcrumb
+  const path = getFolderPath(folders, currentFolder);
+
+  const handleRowDoubleClick = (item, idx) => {
+    if (item.type === 'Folder') {
+      setCurrentFolder(item.id);
+      setSelected([]);
+    } else {
+      // Find the index in the original items array
+      const realIdx = items.findIndex(i => i === item);
+      onAddAndClose([realIdx]);
+    }
+  };
+
+  const handleBreadcrumbClick = (folderId) => {
+    setCurrentFolder(folderId);
+    setSelected([]);
+  };
+
   const toggleSelect = (idx) => {
     setSelected((sel) =>
       sel.includes(idx) ? sel.filter((i) => i !== idx) : [...sel, idx]
@@ -79,8 +123,12 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
         </div>
         {/* Toolbar row */}
         <div className="chooser-toolbar">
-          <button className="chooser-toolbar-btn" title="Back">←</button>
-          <button className="chooser-toolbar-btn" title="Forward">→</button>
+          {/* Back button */}
+          <button className="chooser-toolbar-btn" title="Back" onClick={() => {
+            const parent = folders.find(f => f.id === currentFolder)?.parent;
+            if (parent) setCurrentFolder(parent);
+          }} disabled={currentFolder === 'root'}>←</button>
+          <button className="chooser-toolbar-btn" title="Forward" disabled>→</button>
           <div className="chooser-toolbar-btn-group">
             <button className="active">📂</button>
             <button disabled>🔍</button>
@@ -102,7 +150,21 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
         </div>
         {/* Breadcrumb */}
         <div className="chooser-breadcrumb">
-          Chef Corp. / Editorial / <b>Downloads</b>
+          {path.map((folder, idx) => (
+            <span key={folder.id}>
+              {idx > 0 && ' / '}
+              <a
+                href="#"
+                style={{ color: idx === path.length - 1 ? '#222' : '#1e90c6', textDecoration: idx === path.length - 1 ? 'none' : 'underline', cursor: idx === path.length - 1 ? 'default' : 'pointer' }}
+                onClick={e => {
+                  e.preventDefault();
+                  if (idx !== path.length - 1) handleBreadcrumbClick(folder.id);
+                }}
+              >
+                {folder.name}
+              </a>
+            </span>
+          ))}
         </div>
         {/* Grid */}
         <div className="chooser-grid-container">
@@ -116,25 +178,29 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
               </tr>
             </thead>
             <tbody>
-              {items.map((item, idx) => (
-                <tr
-                  key={idx}
-                  className={selected.includes(idx) ? 'selected' : ''}
-                  onClick={() => toggleSelect(idx)}
-                  onDoubleClick={() => onAddAndClose([idx])}
-                >
-                  <td><span className="chooser-icon">{ICONS[item.type] || '❓'}</span> {item.type}</td>
-                  <td>{item.name}</td>
-                  <td>{item.creationDate}</td>
-                  <td><span className="chooser-icon">{ICONS[item.state] || '❓'}</span></td>
-                </tr>
-              ))}
+              {gridItems.map((item, idx) => {
+                // Find the index in the original items array
+                const realIdx = items.findIndex(i => i === item);
+                return (
+                  <tr
+                    key={realIdx}
+                    className={selected.includes(realIdx) ? 'selected' : ''}
+                    onClick={() => toggleSelect(realIdx)}
+                    onDoubleClick={() => handleRowDoubleClick(item, realIdx)}
+                  >
+                    <td><span className="chooser-icon">{ICONS[item.type] || '❓'}</span> {item.type}</td>
+                    <td>{item.name}</td>
+                    <td>{item.creationDate}</td>
+                    <td><span className="chooser-icon">{ICONS[item.state] || '❓'}</span></td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
         {/* Footer */}
         <div className="chooser-footer">
-          <span>{items.length} items</span>
+          <span>{gridItems.length} items</span>
           <div className="chooser-footer-btns">
             <button onClick={onClose}>Cancel</button>
             <button disabled={selected.length === 0} onClick={() => onAdd(selected)}>
