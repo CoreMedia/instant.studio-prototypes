@@ -1,8 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ICONS } from '../constants';
 
-const FolderTree = ({ folders, currentFolder, onFolderSelect }) => {
-  const [expandedFolders, setExpandedFolders] = useState(new Set());
+const FolderTree = ({ folders, currentFolder, onFolderSelect, initialExpandedFolders = new Set() }) => {
+  const [expandedFolders, setExpandedFolders] = useState(initialExpandedFolders);
+
+  // Update expanded folders when currentFolder changes
+  useEffect(() => {
+    if (currentFolder) {
+      const path = [];
+      let curr = folders.find(f => f.id === currentFolder);
+      while (curr) {
+        path.unshift(curr.id);
+        curr = curr.parent ? folders.find(f => f.id === curr.parent) : null;
+      }
+      setExpandedFolders(new Set(path));
+    }
+  }, [currentFolder, folders]);
 
   const toggleFolder = (folderId, e) => {
     e.stopPropagation();

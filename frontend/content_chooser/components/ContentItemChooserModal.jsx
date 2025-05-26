@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ICONS } from '../constants';
 import FolderTree from './FolderTree';
 
+const STORAGE_KEY = 'content_chooser_state';
+
 const getFolderPath = (folders, currentId) => {
   const path = [];
   let curr = folders.find(f => f.id === currentId);
@@ -12,17 +14,44 @@ const getFolderPath = (folders, currentId) => {
   return path;
 };
 
+const getFolderPathIds = (folders, currentId) => {
+  const path = [];
+  let curr = folders.find(f => f.id === currentId);
+  while (curr) {
+    path.unshift(curr.id);
+    curr = curr.parent ? folders.find(f => f.id === curr.parent) : null;
+  }
+  return path;
+};
+
 const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
   // Folders and content items
   const folders = items.filter(i => i.type === 'Folder');
-  const [currentFolder, setCurrentFolder] = useState('root');
+  
+  // Load saved state from localStorage
+  const savedState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  const [currentFolder, setCurrentFolder] = useState(savedState.currentFolder || 'root');
   const [selected, setSelected] = useState([]);
   const modalRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [modalSize, setModalSize] = useState(savedState.modalSize || { width: 800, height: 600 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
-  const [treeWidth, setTreeWidth] = useState(25); // percentage
+  const [treeWidth, setTreeWidth] = useState(savedState.treeWidth || 25); // percentage
   const isDraggingSeparator = useRef(false);
+  const resizeObserver = useRef(null);
+
+  // Get initial expanded folders
+  const initialExpandedFolders = new Set(getFolderPathIds(folders, currentFolder));
+
+  // Save state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      currentFolder,
+      treeWidth,
+      modalSize
+    }));
+  }, [currentFolder, treeWidth, modalSize]);
 
   useEffect(() => {
     // Center the modal in the viewport
@@ -33,6 +62,25 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
         y: (window.innerHeight - modalRect.height) / 2
       });
     }
+  }, []);
+
+  // Set up resize observer to track modal size changes
+  useEffect(() => {
+    if (modalRef.current) {
+      resizeObserver.current = new ResizeObserver(entries => {
+        for (const entry of entries) {
+          const { width, height } = entry.contentRect;
+          setModalSize({ width, height });
+        }
+      });
+      resizeObserver.current.observe(modalRef.current);
+    }
+
+    return () => {
+      if (resizeObserver.current) {
+        resizeObserver.current.disconnect();
+      }
+    };
   }, []);
 
   const handleMouseDown = (e) => {
@@ -129,7 +177,9 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
         style={{
           left: `${position.x}px`,
           top: `${position.y}px`,
-          transform: 'none'
+          transform: 'none',
+          width: `${modalSize.width}px`,
+          height: `${modalSize.height}px`
         }}
       >
         {/* Title row */}
@@ -173,6 +223,7 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
               folders={folders}
               currentFolder={currentFolder}
               onFolderSelect={setCurrentFolder}
+              initialExpandedFolders={initialExpandedFolders}
             />
           </div>
 
