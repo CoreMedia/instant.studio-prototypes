@@ -38,6 +38,7 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const [treeWidth, setTreeWidth] = useState(savedState.treeWidth || 25); // percentage
+  const [isTreeExpanded, setIsTreeExpanded] = useState(savedState.isTreeExpanded !== false); // default to true
   const isDraggingSeparator = useRef(false);
   const resizeObserver = useRef(null);
 
@@ -49,9 +50,10 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       currentFolder,
       treeWidth,
-      modalSize
+      modalSize,
+      isTreeExpanded
     }));
-  }, [currentFolder, treeWidth, modalSize]);
+  }, [currentFolder, treeWidth, modalSize, isTreeExpanded]);
 
   useEffect(() => {
     // Center the modal in the viewport
@@ -218,20 +220,34 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
         {/* Split view */}
         <div className="chooser-split-view">
           {/* Tree section */}
-          <div className="chooser-tree-section" style={{ width: `${treeWidth}%` }}>
-            <FolderTree
-              folders={folders}
-              currentFolder={currentFolder}
-              onFolderSelect={setCurrentFolder}
-              initialExpandedFolders={initialExpandedFolders}
-            />
+          <div 
+            className={`chooser-tree-section ${!isTreeExpanded ? 'collapsed' : ''}`} 
+            style={{ width: isTreeExpanded ? `${treeWidth}%` : '40px' }}
+          >
+            <button 
+              className="tree-toggle-btn"
+              onClick={() => setIsTreeExpanded(!isTreeExpanded)}
+              title={isTreeExpanded ? "Collapse tree" : "Expand tree"}
+            >
+              {isTreeExpanded ? '◀' : '▶'}
+            </button>
+            {isTreeExpanded && (
+              <FolderTree
+                folders={folders}
+                currentFolder={currentFolder}
+                onFolderSelect={setCurrentFolder}
+                initialExpandedFolders={initialExpandedFolders}
+              />
+            )}
           </div>
 
           {/* Separator */}
-          <div
-            className="chooser-split-separator"
-            onMouseDown={handleSeparatorMouseDown}
-          />
+          {isTreeExpanded && (
+            <div
+              className="chooser-split-separator"
+              onMouseDown={handleSeparatorMouseDown}
+            />
+          )}
 
           {/* Content section */}
           <div className="chooser-content-section">
