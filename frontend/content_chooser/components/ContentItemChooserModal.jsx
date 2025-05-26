@@ -9,14 +9,12 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
   const dragStartPos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    // Position the modal relative to the form section
-    const formSection = document.querySelector('.form-section');
-    if (formSection && modalRef.current) {
-      const formRect = formSection.getBoundingClientRect();
+    // Center the modal in the viewport
+    if (modalRef.current) {
       const modalRect = modalRef.current.getBoundingClientRect();
       setPosition({
-        x: formRect.right - modalRect.width - 20,
-        y: formRect.top + 20
+        x: (window.innerWidth - modalRect.width) / 2,
+        y: (window.innerHeight - modalRect.height) / 2
       });
     }
   }, []);
@@ -123,6 +121,7 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
                   key={idx}
                   className={selected.includes(idx) ? 'selected' : ''}
                   onClick={() => toggleSelect(idx)}
+                  onDoubleClick={() => onAddAndClose([idx])}
                 >
                   <td><span className="chooser-icon">{ICONS[item.type] || '❓'}</span> {item.type}</td>
                   <td>{item.name}</td>
