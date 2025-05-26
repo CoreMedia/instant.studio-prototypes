@@ -38,6 +38,8 @@ const ContentChooser = () => {
   const [mediaSelection, setMediaSelection] = useState([]);
   const [clipboard, setClipboard] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
   React.useEffect(() => {
     const handleMouseMove = (e) => {
@@ -96,6 +98,37 @@ const ContentChooser = () => {
     );
   };
   const isSelected = idx => mediaSelection.includes(idx);
+
+  const handleDragStart = (e, index) => {
+    setDraggedItem(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.classList.add('dragging');
+  };
+
+  const handleDragEnd = (e) => {
+    setDraggedItem(null);
+    setDragOverIndex(null);
+    e.target.classList.remove('dragging');
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedItem === null || draggedItem === targetIndex) return;
+
+    const newOrder = [...selectedMedia];
+    const [movedItem] = newOrder.splice(draggedItem, 1);
+    newOrder.splice(targetIndex, 0, movedItem);
+    
+    setSelectedMedia(newOrder);
+    setDraggedItem(null);
+    setDragOverIndex(null);
+  };
 
   return (
     <div className="studio-root">
@@ -164,9 +197,14 @@ const ContentChooser = () => {
               return (
                 <div
                   key={index}
-                  className={`media-link${isSelected(index) ? ' selected' : ''}`}
+                  className={`media-link${isSelected(index) ? ' selected' : ''}${draggedItem === index ? ' dragging' : ''}${dragOverIndex === index ? ' drag-over' : ''}`}
                   onClick={() => toggleMediaSelect(index)}
                   style={{ border: isSelected(index) ? '2px solid #1e90c6' : undefined }}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
                 >
                   <div 
                     className="media-thumb"
