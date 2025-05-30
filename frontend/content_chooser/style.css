@@ -477,6 +477,33 @@ body, html {
   overflow: hidden;
 }
 
+.chooser-split-separator {
+  width: 6px;
+  background-color: #e5e5e5;
+  cursor: col-resize;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+  /* Ensure it's aligned in the center of the flex container if items have different heights */
+  align-self: stretch; 
+  position: relative;
+  z-index: 10;
+}
+
+.chooser-split-separator:hover {
+  background-color: #1e90c6;
+}
+
+.chooser-split-separator::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Make the hitbox larger than the visible element */
+  margin: 0 -3px;
+}
+
 .chooser-tree-section {
   min-width: 200px;
   max-width: 400px;

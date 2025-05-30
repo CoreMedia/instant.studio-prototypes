@@ -57,7 +57,7 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
   const dragStartPos = useRef({ x: 0, y: 0 });
   const [treeWidth, setTreeWidth] = useState(savedState.treeWidth || 25); // percentage
   const [isTreeExpanded, setIsTreeExpanded] = useState(savedState.isTreeExpanded !== false); // default to true
-  const isDraggingSeparator = useRef(false);
+  const isDraggingSeparator = useRef(false); // MODIFIED: Added
   const resizeObserver = useRef(null);
 
   // Get initial expanded folders
@@ -103,6 +103,36 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
     };
   }, []);
 
+  // Setup global event listeners for dragging
+  useEffect(() => {
+    const handleGlobalMouseMove = (e) => {
+      if (isDragging) {
+        setPosition({
+          x: e.clientX - dragStartPos.current.x,
+          y: e.clientY - dragStartPos.current.y
+        });
+      } else if (isDraggingSeparator.current) {
+        const modalRect = modalRef.current.getBoundingClientRect();
+        const newWidth = ((e.clientX - modalRect.left) / modalRect.width) * 100;
+        setTreeWidth(Math.max(15, Math.min(50, newWidth))); // Constrain width
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+      isDraggingSeparator.current = false;
+      document.body.style.cursor = '';
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging]);
+
   const handleMouseDown = (e) => {
     if (e.target.closest('.chooser-header')) {
       setIsDragging(true);
@@ -113,43 +143,13 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
     }
   };
 
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      setPosition({
-        x: e.clientX - dragStartPos.current.x,
-        y: e.clientY - dragStartPos.current.y
-      });
-    } else if (isDraggingSeparator.current) {
-      const modalRect = modalRef.current.getBoundingClientRect();
-      const newWidth = ((e.clientX - modalRect.left) / modalRect.width) * 100;
-      setTreeWidth(Math.max(20, Math.min(40, newWidth)));
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    isDraggingSeparator.current = false;
-    document.body.style.cursor = '';
-  };
-
   const handleSeparatorMouseDown = (e) => {
     e.preventDefault();
     e.stopPropagation();
     isDraggingSeparator.current = true;
     document.body.style.cursor = 'col-resize';
   };
-
-  useEffect(() => {
-    if (isDragging || isDraggingSeparator.current) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, isDraggingSeparator.current]);
-
+  
   // Filter for current folder
   const subfolders = folders.filter(f => f.parent === currentFolder);
   const contentItems = items.filter(i => i.parent === currentFolder && i.type !== 'Folder');
@@ -259,11 +259,12 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
             )}
           </div>
 
-          {/* Separator */}
+          {/* Separator */} {/* MODIFIED: Added separator */}
           {isTreeExpanded && (
             <div
               className="chooser-split-separator"
               onMouseDown={handleSeparatorMouseDown}
+              style={{ cursor: 'col-resize' }}
             />
           )}
 
@@ -355,4 +356,4 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
   );
 };
 
-export default ContentItemChooserModal; 
+export default ContentItemChooserModal;
