@@ -199,6 +199,22 @@ body, html {
   margin-right: 10px;
   border: 1px solid #b2d6ee;
 }
+
+/* ADDED: Base styles for the media list container */
+.media-list-container {
+  margin: 8px 18px 0 18px; /* Align with toolbar, provide top margin */
+  width: calc(100% - 36px); /* Match .media-search width */
+  box-sizing: border-box;
+  /* Add a min-height and border for when it's empty but not the primary drop target */
+  /* This is more for visual consistency if needed, can be refined */
+}
+
+.media-list-container.is-empty {
+  /* Optional: Differentiate empty list styling if needed beyond the input placeholder */
+  /* e.g., min-height: 50px; border: 1px dashed #ccc; */
+  /* For now, relying on the media-search input as placeholder when empty */
+}
+
 .media-search {
   margin: 0 18px 12px 18px;
   width: calc(100% - 36px);
