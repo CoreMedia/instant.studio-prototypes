@@ -9,7 +9,6 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 import ContentCutOutlinedIcon from '@mui/icons-material/ContentCutOutlined';
 import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
-
 // Function to generate a consistent color based on item properties
 const getItemColor = (item) => {
   // Create a hash from the item's name and type
@@ -258,7 +257,8 @@ const ContentChooser = () => {
       {/* Header Toolbar */}
       <div className="header-toolbar">
         <button className="hamburger">☰</button>
-        <span className="header-title">Content</span>
+        <span className="header-title">CoreMedia Studio</span>
+        <button title="Open Library" onClick={() => { setChooserMode('non-modal'); setChooserOpen(true); }}><OpenInNewOutlinedIcon /></button>
         <div className="header-buttons">
           <button className="header-btn" />
           <button className="header-btn" />
@@ -361,7 +361,7 @@ const ContentChooser = () => {
               className={`media-search ${selectedMedia.length === 0 ? 'drop-target-when-empty' : ''}`}
               placeholder={
                 selectedMedia.length === 0 
-                  ? "Drag items here from chooser or use 'Add' (＋)" 
+                  ? "Drag items here from Library or use 'Add' (＋)" 
                   : "Search linked items (not implemented)"
               }
               onDrop={selectedMedia.length === 0 ? handleDropFromChooser : undefined}

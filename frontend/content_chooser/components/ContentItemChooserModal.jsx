@@ -229,7 +229,7 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items, chooser
     >
       {/* Title row */}
       <div className="chooser-header light-blue-bg">
-        <span>Content Item Chooser</span>
+        <span>{chooserMode === 'non-modal' ? 'Library' : 'Content Item Chooser'}</span>
         <button className="chooser-close" onClick={onClose}><CloseOutlinedIcon /></button>
       </div>
       {/* Toolbar row */}
