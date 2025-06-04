@@ -37,9 +37,11 @@ const ContentChooser = () => {
   const [selectedMedia, setSelectedMedia] = useState([]);
   const [mediaSelection, setMediaSelection] = useState([]);
   const [clipboard, setClipboard] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [chooserOpen, setChooserOpen] = useState(false);
+  const [chooserMode, setChooserMode] = useState('modal');
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
+  const mediaListRef = useRef(null);
 
   React.useEffect(() => {
     const handleMouseMove = (e) => {
@@ -71,7 +73,7 @@ const ContentChooser = () => {
 
   const handleAddAndClose = (selectedIndices) => {
     handleAdd(selectedIndices);
-    setModalOpen(false);
+    setChooserOpen(false);
   };
 
   const handleDelete = () => {
@@ -92,6 +94,56 @@ const ContentChooser = () => {
     }
   };
 
+  const handleDropFromChooser = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const itemString = e.dataTransfer.getData('application/json');
+    if (itemString && draggedItem === null) {
+      // This is an external drag from the chooser
+      try {
+        const item = JSON.parse(itemString);
+        
+        // Find the item in chooserData using multiple criteria
+        const newItem = chooserData.find(i => 
+          (item.id && i.id === item.id) || 
+          (i.name === item.name && i.type === item.type && i.parent === item.parent)
+        ) || item;
+        
+        setSelectedMedia(prev => [...prev, newItem]);
+      } catch (error) {
+        console.error("Failed to parse dropped item:", error);
+      }
+    }
+    
+    // Clean up visual feedback
+    if (e.currentTarget.classList.contains('drag-over-active')) {
+      e.currentTarget.classList.remove('drag-over-active');
+    }
+  };
+
+  const handleDragOverGeneral = (e) => {
+    e.preventDefault();
+    
+    // Check if this is an external drag (from chooser) by looking at the data
+    const hasExternalData = e.dataTransfer.types.includes('application/json');
+    
+    if (hasExternalData && draggedItem === null) {
+      // This is an external drag from the chooser
+      e.dataTransfer.dropEffect = 'copy';
+      e.currentTarget.classList.add('drag-over-active');
+    } else if (draggedItem !== null) {
+      // This is an internal drag for reordering, don't show container highlight
+      e.dataTransfer.dropEffect = 'move';
+    }
+  };
+
+  const handleDragLeaveGeneral = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      e.currentTarget.classList.remove('drag-over-active');
+    }
+  };
+
   const toggleMediaSelect = (idx) => {
     setMediaSelection(sel =>
       sel.includes(idx) ? sel.filter(i => i !== idx) : [...sel, idx]
@@ -108,22 +160,65 @@ const ContentChooser = () => {
   const handleDragEnd = (e) => {
     setDraggedItem(null);
     setDragOverIndex(null);
-    e.target.classList.remove('dragging');
+    document.querySelectorAll('.drag-over-active').forEach(el => el.classList.remove('drag-over-active'));
   };
 
-  const handleDragOver = (e, index) => {
+  const handleDragOverReorder = (e, index) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Check if this is an external drag (from chooser) by looking at the data
+    const hasExternalData = e.dataTransfer.types.includes('application/json');
+    
+    if (hasExternalData && draggedItem === null) {
+      // This is an external drag from the chooser, let the container handle it
+      e.dataTransfer.dropEffect = 'copy';
+      return;
+    }
+    
+    // This is an internal drag for reordering
     e.dataTransfer.dropEffect = 'move';
-    setDragOverIndex(index);
+    if (index !== draggedItem) {
+        setDragOverIndex(index);
+    } else {
+        setDragOverIndex(null);
+    }
   };
 
-  const handleDrop = (e, targetIndex) => {
+  const handleDropReorder = (e, targetIndex) => {
     e.preventDefault();
-    if (draggedItem === null || draggedItem === targetIndex) return;
+    e.stopPropagation();
+
+    // Check if this is an external drag (from chooser)
+    const itemString = e.dataTransfer.getData('application/json');
+    if (itemString && draggedItem === null) {
+      // This is an external drag, handle it like the container drop
+      try {
+        const item = JSON.parse(itemString);
+        
+        // Find the item in chooserData using multiple criteria
+        const newItem = chooserData.find(i => 
+          (item.id && i.id === item.id) || 
+          (i.name === item.name && i.type === item.type && i.parent === item.parent)
+        ) || item;
+        
+        setSelectedMedia(prev => [...prev, newItem]);
+      } catch (error) {
+        console.error("Failed to parse dropped item:", error);
+      }
+      return;
+    }
+
+    // Handle internal reordering
+    if (draggedItem === null || draggedItem === targetIndex && dragOverIndex === targetIndex) {
+       setDragOverIndex(null);
+       return;
+    }
 
     const newOrder = [...selectedMedia];
-    const [movedItem] = newOrder.splice(draggedItem, 1);
-    newOrder.splice(targetIndex, 0, movedItem);
+    const itemToMove = newOrder.splice(draggedItem, 1)[0];
+    
+    newOrder.splice(targetIndex, 0, itemToMove);
     
     setSelectedMedia(newOrder);
     setDraggedItem(null);
@@ -190,34 +285,55 @@ const ContentChooser = () => {
               <button title="Cut" onClick={handleCut} disabled={mediaSelection.length === 0}>✂️</button>
               <button title="Copy" onClick={handleCopy} disabled={mediaSelection.length === 0}>📋</button>
               <button title="Paste" onClick={handlePaste} disabled={clipboard.length === 0}>📥</button>
-              <button title="Add" onClick={() => setModalOpen(true)}>＋</button>
+              <button title="Add (Modal)" onClick={() => { setChooserMode('modal'); setChooserOpen(true); }}>＋</button>
+              <button title="Open Chooser (Non-Modal)" onClick={() => { setChooserMode('non-modal'); setChooserOpen(true); }}>⎘</button>
             </div>
-            {selectedMedia.map((item, index) => {
-              const itemColor = getItemColor(item);
-              return (
-                <div
-                  key={index}
-                  className={`media-link${isSelected(index) ? ' selected' : ''}${draggedItem === index ? ' dragging' : ''}${dragOverIndex === index ? ' drag-over' : ''}`}
-                  onClick={() => toggleMediaSelect(index)}
-                  style={{ border: isSelected(index) ? '2px solid #1e90c6' : undefined }}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, index)}
-                  onDragEnd={handleDragEnd}
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  onDrop={(e) => handleDrop(e, index)}
-                >
-                  <div 
-                    className="media-thumb"
-                    style={{
-                      background: `repeating-linear-gradient(45deg, ${itemColor}, ${itemColor} 8px, #eaf6fb 8px, #eaf6fb 16px)`,
-                      borderColor: itemColor
-                    }}
-                  />
-                  <span>{item.name}</span>
-                </div>
-              );
-            })}
-            <input className="media-search" placeholder="Type here to search or drag and drop content onto this area." disabled />
+            <div
+              ref={mediaListRef}
+              className={`media-list-container ${selectedMedia.length > 0 ? 'has-items' : 'is-empty'}`}
+              onDrop={handleDropFromChooser}
+              onDragOver={handleDragOverGeneral}
+              onDragLeave={handleDragLeaveGeneral}
+            >
+              {selectedMedia.map((item, index) => {
+                const itemColor = getItemColor(item);
+                return (
+                  <div
+                    key={item.id || index}
+                    className={`media-link${isSelected(index) ? ' selected' : ''}${draggedItem === index ? ' dragging' : ''}${dragOverIndex === index && draggedItem !== index ? ' drag-over' : ''}`}
+                    onClick={() => toggleMediaSelect(index)}
+                    style={{ border: isSelected(index) ? '2px solid #1e90c6' : undefined }}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOverReorder(e, index)}
+                    onDrop={(e) => handleDropReorder(e, index)}
+                  >
+                    <div 
+                      className="media-thumb"
+                      style={{
+                        background: `repeating-linear-gradient(45deg, ${itemColor}, ${itemColor} 8px, #eaf6fb 8px, #eaf6fb 16px)`,
+                        borderColor: itemColor
+                      }}
+                    />
+                    <span>{item.name}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <input 
+              className={`media-search ${selectedMedia.length === 0 ? 'drop-target-when-empty' : ''}`}
+              placeholder={
+                selectedMedia.length === 0 
+                  ? "Drag items here from chooser or use 'Add' (＋)" 
+                  : "Search linked items (not implemented)"
+              }
+              onDrop={selectedMedia.length === 0 ? handleDropFromChooser : undefined}
+              onDragOver={selectedMedia.length === 0 ? handleDragOverGeneral : undefined}
+              onDragLeave={selectedMedia.length === 0 ? handleDragLeaveGeneral : undefined}
+              disabled={selectedMedia.length > 0}
+              readOnly={selectedMedia.length === 0}
+            />
           </div>
         </div>
 
@@ -252,12 +368,13 @@ const ContentChooser = () => {
       </div>
 
       {/* Modal for Content Item Chooser */}
-      {modalOpen && (
+      {chooserOpen && (
         <ContentItemChooserModal
-          onClose={() => setModalOpen(false)}
+          onClose={() => setChooserOpen(false)}
           onAdd={handleAdd}
           onAddAndClose={handleAddAndClose}
           items={chooserData}
+          chooserMode={chooserMode}
         />
       )}
     </div>

@@ -42,7 +42,7 @@ const getFolderPathIds = (folders, currentId) => {
   return path;
 };
 
-const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
+const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items, chooserMode }) => {
   // Folders and content items
   const folders = items.filter(i => i.type === 'Folder');
   
@@ -166,11 +166,15 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
   const path = getFolderPath(folders, currentFolder);
 
   const handleRowDoubleClick = (item, idx) => {
-    if (item.type === 'Folder') {
+    if (chooserMode === 'non-modal' && item.type !== 'Folder') {
+      // Open in new tab for non-modal mode
+      // This is a placeholder. In a real app, you'd construct a proper URL.
+      window.open(`/#item/${item.id}`, '_blank');
+    } else if (item.type === 'Folder') {
       setCurrentFolder(item.id);
       setSelected([]);
     } else {
-      // Find the index in the original items array
+      // Original behavior for modal mode or if it's a folder in non-modal (though folders are handled above)
       const realIdx = items.findIndex(i => i === item);
       onAddAndClose([realIdx]);
     }
@@ -187,181 +191,201 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
     );
   };
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div 
-        ref={modalRef}
-        className="modal-window chooser-modal" 
-        onClick={e => e.stopPropagation()}
-        onMouseDown={handleMouseDown}
-        style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          transform: 'none',
-          width: `${modalSize.width}px`,
-          height: `${modalSize.height}px`
-        }}
-      >
-        {/* Title row */}
-        <div className="chooser-header light-blue-bg">
-          <span>Content Item Chooser</span>
-          <button className="chooser-close" onClick={onClose}><CloseOutlinedIcon /></button>
-        </div>
-        {/* Toolbar row */}
-        <div className="chooser-toolbar">
-          {/* Search field first */}
-          <input className="chooser-search" placeholder="Search" disabled />
-          
-          {/* Document type dropdown */}
-          <select className="chooser-type-filter" disabled>
-            <option>All</option>
-            <option>Folder</option>
-            <option>Article</option>
-            <option>Picture</option>
-            <option>Teaser</option>
-            <option>Video</option>
-          </select>
-          
-          <div className="chooser-toolbar-spacer" />
-          
-          {/* View switcher */}
-          <div className="chooser-view-btn-group">
-            <button className="active" title="List view"><MenuOutlinedIcon /></button>
-            <button title="Thumbnail view" disabled><GridViewOutlinedIcon /></button>
-          </div>
-        </div>
+  // ADDED: Drag start handler for items in non-modal mode
+  const handleDragStartNonModal = (e, item) => {
+    if (chooserMode === 'non-modal') {
+      e.dataTransfer.setData('application/json', JSON.stringify(item));
+      e.dataTransfer.effectAllowed = 'copy'; // Or 'link'
+    }
+  };
 
-        {/* Split view */}
-        <div className="chooser-split-view">
-          {/* Tree section */}
-          <div 
-            className={`chooser-tree-section ${!isTreeExpanded ? 'collapsed' : ''}`} 
-            style={{ width: isTreeExpanded ? `${treeWidth}%` : '40px' }}
+  const ChooserWindow = (
+    <div 
+      ref={modalRef}
+      className={`modal-window chooser-modal ${chooserMode === 'non-modal' ? 'non-modal-chooser' : ''}`} // ADDED: class for non-modal styling
+      onClick={e => e.stopPropagation()}
+      onMouseDown={handleMouseDown}
+      style={{
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        transform: 'none',
+        width: `${modalSize.width}px`,
+        height: `${modalSize.height}px`
+      }}
+    >
+      {/* Title row */}
+      <div className="chooser-header light-blue-bg">
+        <span>Content Item Chooser</span>
+        <button className="chooser-close" onClick={onClose}><CloseOutlinedIcon /></button>
+      </div>
+      {/* Toolbar row */}
+      <div className="chooser-toolbar">
+        {/* Search field first */}
+        <input className="chooser-search" placeholder="Search" disabled />
+        
+        {/* Document type dropdown */}
+        <select className="chooser-type-filter" disabled>
+          <option>All</option>
+          <option>Folder</option>
+          <option>Article</option>
+          <option>Picture</option>
+          <option>Teaser</option>
+          <option>Video</option>
+        </select>
+        
+        <div className="chooser-toolbar-spacer" />
+        
+        {/* View switcher */}
+        <div className="chooser-view-btn-group">
+          <button className="active" title="List view"><MenuOutlinedIcon /></button>
+          <button title="Thumbnail view" disabled><GridViewOutlinedIcon /></button>
+        </div>
+      </div>
+
+      {/* Split view */}
+      <div className="chooser-split-view">
+        {/* Tree section */}
+        <div 
+          className={`chooser-tree-section ${!isTreeExpanded ? 'collapsed' : ''}`} 
+          style={{ width: isTreeExpanded ? `${treeWidth}%` : '40px' }}
+        >
+          <button 
+            className="tree-toggle-btn small-round"
+            onClick={() => setIsTreeExpanded(!isTreeExpanded)}
+            title={isTreeExpanded ? "Collapse tree" : "Expand tree"}
           >
-            <button 
-              className="tree-toggle-btn small-round"
-              onClick={() => setIsTreeExpanded(!isTreeExpanded)}
-              title={isTreeExpanded ? "Collapse tree" : "Expand tree"}
-            >
-              {isTreeExpanded ? <ChevronLeftOutlinedIcon /> : <ChevronRightOutlinedIcon />}
-            </button>
-            {isTreeExpanded && (
-              <FolderTree
-                folders={folders}
-                currentFolder={currentFolder}
-                onFolderSelect={setCurrentFolder}
-                initialExpandedFolders={initialExpandedFolders}
-              />
-            )}
-          </div>
-
-          {/* Separator */}
+            {isTreeExpanded ? <ChevronLeftOutlinedIcon /> : <ChevronRightOutlinedIcon />}
+          </button>
           {isTreeExpanded && (
-            <div
-              className="chooser-split-separator"
-              onMouseDown={handleSeparatorMouseDown}
-              style={{ cursor: 'col-resize' }}
+            <FolderTree
+              folders={folders}
+              currentFolder={currentFolder}
+              onFolderSelect={setCurrentFolder}
+              initialExpandedFolders={initialExpandedFolders}
             />
           )}
-
-          {/* Content section */}
-          <div className="chooser-content-section">
-            {/* Navigation and Breadcrumb */}
-            <div className="chooser-navigation-bar">
-              {/* Back and Forward buttons */}
-              <div className="chooser-nav-buttons">
-                <button className="chooser-nav-btn" title="Back" onClick={() => {
-                  const parent = folders.find(f => f.id === currentFolder)?.parent;
-                  if (parent) setCurrentFolder(parent);
-                }} disabled={currentFolder === 'root'}><ArrowBackOutlinedIcon /></button>
-                <button className="chooser-nav-btn" title="Forward" disabled><ArrowForwardOutlinedIcon /></button>
-              </div>
-              
-              {/* Breadcrumb */}
-              <div className="chooser-breadcrumb">
-                {path.map((folder, idx) => (
-                  <span key={folder.id}>
-                    {idx > 0 && ' / '}
-                    <a
-                      href="#"
-                      style={{ color: idx === path.length - 1 ? '#222' : '#1e90c6', textDecoration: idx === path.length - 1 ? 'none' : 'underline', cursor: idx === path.length - 1 ? 'default' : 'pointer' }}
-                      onClick={e => {
-                        e.preventDefault();
-                        if (idx !== path.length - 1) handleBreadcrumbClick(folder.id);
-                      }}
-                    >
-                      {folder.name}
-                    </a>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Grid */}
-            <div className="chooser-grid-container">
-              <table className="chooser-grid">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Name</th>
-                    <th>Created</th>
-                    <th>State</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {gridItems.map((item, idx) => {
-                    // Find the index in the original items array
-                    const realIdx = items.findIndex(i => i === item);
-                    return (
-                      <tr
-                        key={realIdx}
-                        className={selected.includes(realIdx) ? 'selected' : ''}
-                        onClick={() => toggleSelect(realIdx)}
-                        onDoubleClick={() => handleRowDoubleClick(item, realIdx)}
-                      >
-                        <td><span className="chooser-icon">{
-                          item.type === 'Folder' ? <FolderOutlinedIcon /> :
-                          item.type === 'Article' ? <DescriptionOutlinedIcon /> :
-                          item.type === 'Picture' ? <ImageOutlinedIcon /> :
-                          item.type === 'Teaser' ? <EditNoteOutlinedIcon /> :
-                          item.type === 'Video' ? <SmartDisplayOutlinedIcon /> :
-                          <HelpOutlineOutlinedIcon />
-                        }</span> {item.type}</td>
-                        <td>{item.name}</td>
-                        <td>{item.creationDate}</td>
-                        <td><span className="chooser-icon">{
-                          item.state === 'Checked In' ? <LockOutlinedIcon /> :
-                          item.state === 'Checked Out' ? <LockOpenOutlinedIcon /> :
-                          item.state === 'Approved' ? <CheckCircleOutlinedIcon /> :
-                          item.state === 'Published' ? <PublicOutlinedIcon /> :
-                          item.state === 'Deleted' ? <DeleteOutlineOutlinedIcon /> :
-                          <HelpOutlineOutlinedIcon />
-                        }</span></td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
 
-        {/* Footer */}
-        <div className="chooser-footer">
-          <span>{gridItems.length} items</span>
-          <div className="chooser-footer-btns">
-            <button onClick={onClose}>Cancel</button>
-            <button disabled={selected.length === 0} onClick={() => onAdd(selected)}>
-              Add
-            </button>
-            <button disabled={selected.length === 0} onClick={() => onAddAndClose(selected)}>
-              Add & Close
-            </button>
+        {/* Separator */}
+        {isTreeExpanded && (
+          <div
+            className="chooser-split-separator"
+            onMouseDown={handleSeparatorMouseDown}
+            style={{ cursor: 'col-resize' }}
+          />
+        )}
+
+        {/* Content section */}
+        <div className="chooser-content-section">
+          {/* Navigation and Breadcrumb */}
+          <div className="chooser-navigation-bar">
+            {/* Back and Forward buttons */}
+            <div className="chooser-nav-buttons">
+              <button className="chooser-nav-btn" title="Back" onClick={() => {
+                const parent = folders.find(f => f.id === currentFolder)?.parent;
+                if (parent) setCurrentFolder(parent);
+              }} disabled={currentFolder === 'root'}><ArrowBackOutlinedIcon /></button>
+              <button className="chooser-nav-btn" title="Forward" disabled><ArrowForwardOutlinedIcon /></button>
+            </div>
+            
+            {/* Breadcrumb */}
+            <div className="chooser-breadcrumb">
+              {path.map((folder, idx) => (
+                <span key={folder.id}>
+                  {idx > 0 && ' / '}
+                  <a
+                    href="#"
+                    style={{ color: idx === path.length - 1 ? '#222' : '#1e90c6', textDecoration: idx === path.length - 1 ? 'none' : 'underline', cursor: idx === path.length - 1 ? 'default' : 'pointer' }}
+                    onClick={e => {
+                      e.preventDefault();
+                      if (idx !== path.length - 1) handleBreadcrumbClick(folder.id);
+                    }}
+                  >
+                    {folder.name}
+                  </a>
+                </span>
+              ))}
+            </div>
           </div>
+
+          {/* Grid */}
+          <div className="chooser-grid-container">
+            <table className="chooser-grid">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Name</th>
+                  <th>Created</th>
+                  <th>State</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gridItems.map((item, idx) => {
+                  // Find the index in the original items array
+                  const realIdx = items.findIndex(i => i === item);
+                  return (
+                    <tr
+                      key={realIdx}
+                      className={selected.includes(realIdx) ? 'selected' : ''}
+                      onClick={() => toggleSelect(realIdx)}
+                      onDoubleClick={() => handleRowDoubleClick(item, realIdx)}
+                      draggable={chooserMode === 'non-modal' && item.type !== 'Folder'}
+                      onDragStart={chooserMode === 'non-modal' && item.type !== 'Folder' ? (e) => handleDragStartNonModal(e, item) : undefined}
+                    >
+                      <td><span className="chooser-icon">{
+                        item.type === 'Folder' ? <FolderOutlinedIcon /> :
+                        item.type === 'Article' ? <DescriptionOutlinedIcon /> :
+                        item.type === 'Picture' ? <ImageOutlinedIcon /> :
+                        item.type === 'Teaser' ? <EditNoteOutlinedIcon /> :
+                        item.type === 'Video' ? <SmartDisplayOutlinedIcon /> :
+                        <HelpOutlineOutlinedIcon />
+                      }</span> {item.type}</td>
+                      <td>{item.name}</td>
+                      <td>{item.creationDate}</td>
+                      <td><span className="chooser-icon">{
+                        item.state === 'Checked In' ? <LockOutlinedIcon /> :
+                        item.state === 'Checked Out' ? <LockOpenOutlinedIcon /> :
+                        item.state === 'Approved' ? <CheckCircleOutlinedIcon /> :
+                        item.state === 'Published' ? <PublicOutlinedIcon /> :
+                        item.state === 'Deleted' ? <DeleteOutlineOutlinedIcon /> :
+                        <HelpOutlineOutlinedIcon />
+                      }</span></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="chooser-footer">
+        <span>{gridItems.length} items</span>
+        <div className="chooser-footer-btns">
+          <button onClick={onClose}>Cancel</button>
+          <button disabled={selected.length === 0} onClick={() => onAdd(selected)}>
+            Add
+          </button>
+          <button disabled={selected.length === 0} onClick={() => onAddAndClose(selected)}>
+            Add & Close
+          </button>
         </div>
       </div>
     </div>
   );
+
+  // Conditionally wrap with overlay if in modal mode
+  if (chooserMode === 'modal') {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        {ChooserWindow}
+      </div>
+    );
+  }
+
+  // Otherwise, return the window directly (for non-modal)
+  return ChooserWindow;
 };
 
 export default ContentItemChooserModal;

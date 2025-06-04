@@ -676,3 +676,24 @@ body, html {
   color: #aaa;
   border: 1px solid #ccc;
 }
+
+/* ADDED: Styles for the media list drop zone when active */
+.media-list-container.drag-over-active {
+  outline: 2px dashed #1e90c6;
+  background-color: #eaf6fb; /* Light blue to indicate active drop area */
+}
+
+/* Also add styles for the search input when it's a drop target */
+.media-search.drop-target-when-empty.drag-over-active {
+  outline: 2px dashed #1e90c6;
+  background-color: #eaf6fb; /* Light blue to indicate active drop area */
+}
+
+/* ADDED: Styles for non-modal chooser to make it appear as a floating window */
+.chooser-modal.non-modal-chooser {
+  position: fixed; /* Use fixed positioning instead of absolute relative to overlay */
+  z-index: 1001; /* Ensure it's above other content but potentially below other modals if any */
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25); /* More pronounced shadow for floating effect */
+  /* top, left, width, height are set via inline styles for draggability/resizability */
+  /* transform: translate(-50%, -50%) is removed as position is handled by JS */ 
+}
