@@ -203,23 +203,16 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
         }}
       >
         {/* Title row */}
-        <div className="chooser-header">
+        <div className="chooser-header light-blue-bg">
           <span>Content Item Chooser</span>
           <button className="chooser-close" onClick={onClose}><CloseOutlinedIcon /></button>
         </div>
         {/* Toolbar row */}
         <div className="chooser-toolbar">
-          {/* Back button */}
-          <button className="chooser-toolbar-btn" title="Back" onClick={() => {
-            const parent = folders.find(f => f.id === currentFolder)?.parent;
-            if (parent) setCurrentFolder(parent);
-          }} disabled={currentFolder === 'root'}><ArrowBackOutlinedIcon /></button>
-          <button className="chooser-toolbar-btn" title="Forward" disabled><ArrowForwardOutlinedIcon /></button>
-          <div className="chooser-toolbar-btn-group">
-            <button className="active"><FolderOutlinedIcon /></button>
-            <button disabled><SearchOutlinedIcon /></button>
-          </div>
-          <div className="chooser-toolbar-spacer" />
+          {/* Search field first */}
+          <input className="chooser-search" placeholder="Search" disabled />
+          
+          {/* Document type dropdown */}
           <select className="chooser-type-filter" disabled>
             <option>All</option>
             <option>Folder</option>
@@ -228,7 +221,10 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
             <option>Teaser</option>
             <option>Video</option>
           </select>
-          <input className="chooser-search" placeholder="Search" disabled />
+          
+          <div className="chooser-toolbar-spacer" />
+          
+          {/* View switcher */}
           <div className="chooser-view-btn-group">
             <button className="active" title="List view"><MenuOutlinedIcon /></button>
             <button title="Thumbnail view" disabled><GridViewOutlinedIcon /></button>
@@ -243,7 +239,7 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
             style={{ width: isTreeExpanded ? `${treeWidth}%` : '40px' }}
           >
             <button 
-              className="tree-toggle-btn"
+              className="tree-toggle-btn small-round"
               onClick={() => setIsTreeExpanded(!isTreeExpanded)}
               title={isTreeExpanded ? "Collapse tree" : "Expand tree"}
             >
@@ -259,7 +255,7 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
             )}
           </div>
 
-          {/* Separator */} {/* MODIFIED: Added separator */}
+          {/* Separator */}
           {isTreeExpanded && (
             <div
               className="chooser-split-separator"
@@ -270,23 +266,35 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items }) => {
 
           {/* Content section */}
           <div className="chooser-content-section">
-            {/* Breadcrumb */}
-            <div className="chooser-breadcrumb">
-              {path.map((folder, idx) => (
-                <span key={folder.id}>
-                  {idx > 0 && ' / '}
-                  <a
-                    href="#"
-                    style={{ color: idx === path.length - 1 ? '#222' : '#1e90c6', textDecoration: idx === path.length - 1 ? 'none' : 'underline', cursor: idx === path.length - 1 ? 'default' : 'pointer' }}
-                    onClick={e => {
-                      e.preventDefault();
-                      if (idx !== path.length - 1) handleBreadcrumbClick(folder.id);
-                    }}
-                  >
-                    {folder.name}
-                  </a>
-                </span>
-              ))}
+            {/* Navigation and Breadcrumb */}
+            <div className="chooser-navigation-bar">
+              {/* Back and Forward buttons */}
+              <div className="chooser-nav-buttons">
+                <button className="chooser-nav-btn" title="Back" onClick={() => {
+                  const parent = folders.find(f => f.id === currentFolder)?.parent;
+                  if (parent) setCurrentFolder(parent);
+                }} disabled={currentFolder === 'root'}><ArrowBackOutlinedIcon /></button>
+                <button className="chooser-nav-btn" title="Forward" disabled><ArrowForwardOutlinedIcon /></button>
+              </div>
+              
+              {/* Breadcrumb */}
+              <div className="chooser-breadcrumb">
+                {path.map((folder, idx) => (
+                  <span key={folder.id}>
+                    {idx > 0 && ' / '}
+                    <a
+                      href="#"
+                      style={{ color: idx === path.length - 1 ? '#222' : '#1e90c6', textDecoration: idx === path.length - 1 ? 'none' : 'underline', cursor: idx === path.length - 1 ? 'default' : 'pointer' }}
+                      onClick={e => {
+                        e.preventDefault();
+                        if (idx !== path.length - 1) handleBreadcrumbClick(folder.id);
+                      }}
+                    >
+                      {folder.name}
+                    </a>
+                  </span>
+                ))}
+              </div>
             </div>
 
             {/* Grid */}
