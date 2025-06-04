@@ -48,6 +48,8 @@ const ContentChooser = () => {
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const mediaListRef = useRef(null);
+  const [openTabs, setOpenTabs] = useState([{ id: 'default', name: 'Enjoy your passion' }]);
+  const [activeTabId, setActiveTabId] = useState('default');
 
   React.useEffect(() => {
     const handleMouseMove = (e) => {
@@ -241,6 +243,16 @@ const ContentChooser = () => {
     setDragOverIndex(null);
   };
 
+  const handleOpenItemInTab = (itemToOpen) => {
+    // Use a unique ID for the tab, e.g., based on item properties if available, or generate one.
+    // For now, let's assume item.id is unique for content items or use name as a fallback for simplicity.
+    const tabId = itemToOpen.id || `tab-${itemToOpen.name.replace(/\s+/g, '-').toLowerCase()}`;
+    if (!openTabs.find(tab => tab.id === tabId)) {
+      setOpenTabs(prevTabs => [...prevTabs, { id: tabId, name: itemToOpen.name, itemData: itemToOpen }]);
+    }
+    setActiveTabId(tabId);
+  };
+
   return (
     <div className="studio-root">
       {/* Header Toolbar */}
@@ -256,7 +268,15 @@ const ContentChooser = () => {
 
       {/* Tabbed Panel */}
       <div className="tabbed-panel">
-        <div className="tab active">Enjoy your passion</div>
+        {openTabs.map(tab => (
+          <div 
+            key={tab.id}
+            className={`tab ${tab.id === activeTabId ? 'active' : ''}`}
+            onClick={() => setActiveTabId(tab.id)}
+          >
+            {tab.name}
+          </div>
+        ))}
       </div>
 
       {/* Main Content Area */}
@@ -391,6 +411,7 @@ const ContentChooser = () => {
           onAddAndClose={handleAddAndClose}
           items={chooserData}
           chooserMode={chooserMode}
+          onOpenItemInTab={handleOpenItemInTab}
         />
       )}
     </div>

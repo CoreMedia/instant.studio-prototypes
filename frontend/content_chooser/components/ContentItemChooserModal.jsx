@@ -42,7 +42,7 @@ const getFolderPathIds = (folders, currentId) => {
   return path;
 };
 
-const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items, chooserMode }) => {
+const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items, chooserMode, onOpenItemInTab }) => {
   // Folders and content items
   const folders = items.filter(i => i.type === 'Folder');
   
@@ -167,9 +167,13 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items, chooser
 
   const handleRowDoubleClick = (item, idx) => {
     if (chooserMode === 'non-modal' && item.type !== 'Folder') {
-      // Open in new tab for non-modal mode
-      // This is a placeholder. In a real app, you'd construct a proper URL.
-      window.open(`/#item/${item.id}`, '_blank');
+      // MODIFIED: Call the new handler to open in an in-app tab
+      if (onOpenItemInTab) {
+        onOpenItemInTab(item);
+      }
+      // Optionally, still close the non-modal chooser after opening in tab, or leave it open.
+      // For now, let's leave it open as the behavior of opening a new tab usually doesn't close the source.
+      // onClose(); // If you want to close it
     } else if (item.type === 'Folder') {
       setCurrentFolder(item.id);
       setSelected([]);
