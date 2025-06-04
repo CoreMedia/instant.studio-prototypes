@@ -3,6 +3,12 @@ import '../style.css';
 import chooserData from '../chooser_data.json';
 import { MIN_WIDTH } from '../constants';
 import ContentItemChooserModal from './ContentItemChooserModal';
+import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
+import ContentPasteOutlinedIcon from '@mui/icons-material/ContentPasteOutlined';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import ContentCutOutlinedIcon from '@mui/icons-material/ContentCutOutlined';
+import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
+import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 
 // Function to generate a consistent color based on item properties
 const getItemColor = (item) => {
@@ -102,15 +108,20 @@ const ContentChooser = () => {
     if (itemString && draggedItem === null) {
       // This is an external drag from the chooser
       try {
-        const item = JSON.parse(itemString);
+        const draggedData = JSON.parse(itemString);
         
-        // Find the item in chooserData using multiple criteria
-        const newItem = chooserData.find(i => 
-          (item.id && i.id === item.id) || 
-          (i.name === item.name && i.type === item.type && i.parent === item.parent)
-        ) || item;
+        // Handle both single items and arrays of items
+        const itemsToAdd = Array.isArray(draggedData) ? draggedData : [draggedData];
         
-        setSelectedMedia(prev => [...prev, newItem]);
+        const newItems = itemsToAdd.map(item => {
+          // Find the item in chooserData using multiple criteria
+          return chooserData.find(i => 
+            (item.id && i.id === item.id) || 
+            (i.name === item.name && i.type === item.type && i.parent === item.parent)
+          ) || item;
+        });
+        
+        setSelectedMedia(prev => [...prev, ...newItems]);
       } catch (error) {
         console.error("Failed to parse dropped item:", error);
       }
@@ -194,15 +205,20 @@ const ContentChooser = () => {
     if (itemString && draggedItem === null) {
       // This is an external drag, handle it like the container drop
       try {
-        const item = JSON.parse(itemString);
+        const draggedData = JSON.parse(itemString);
         
-        // Find the item in chooserData using multiple criteria
-        const newItem = chooserData.find(i => 
-          (item.id && i.id === item.id) || 
-          (i.name === item.name && i.type === item.type && i.parent === item.parent)
-        ) || item;
+        // Handle both single items and arrays of items
+        const itemsToAdd = Array.isArray(draggedData) ? draggedData : [draggedData];
         
-        setSelectedMedia(prev => [...prev, newItem]);
+        const newItems = itemsToAdd.map(item => {
+          // Find the item in chooserData using multiple criteria
+          return chooserData.find(i => 
+            (item.id && i.id === item.id) || 
+            (i.name === item.name && i.type === item.type && i.parent === item.parent)
+          ) || item;
+        });
+        
+        setSelectedMedia(prev => [...prev, ...newItems]);
       } catch (error) {
         console.error("Failed to parse dropped item:", error);
       }
@@ -281,12 +297,12 @@ const ContentChooser = () => {
           <div className="form-group expanded">
             <div className="form-group-title">Pictures and Other Media</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '8px 18px 0 18px' }}>
-              <button title="Delete" onClick={handleDelete} disabled={mediaSelection.length === 0}>🗑️</button>
-              <button title="Cut" onClick={handleCut} disabled={mediaSelection.length === 0}>✂️</button>
-              <button title="Copy" onClick={handleCopy} disabled={mediaSelection.length === 0}>📋</button>
-              <button title="Paste" onClick={handlePaste} disabled={clipboard.length === 0}>📥</button>
-              <button title="Add (Modal)" onClick={() => { setChooserMode('modal'); setChooserOpen(true); }}>＋</button>
-              <button title="Open Chooser (Non-Modal)" onClick={() => { setChooserMode('non-modal'); setChooserOpen(true); }}>⎘</button>
+              <button title="Delete" onClick={handleDelete} disabled={mediaSelection.length === 0}><DeleteOutlineOutlinedIcon /></button>
+              <button title="Cut" onClick={handleCut} disabled={mediaSelection.length === 0}><ContentCutOutlinedIcon /></button>
+              <button title="Copy" onClick={handleCopy} disabled={mediaSelection.length === 0}><ContentCopyOutlinedIcon /></button>
+              <button title="Paste" onClick={handlePaste} disabled={clipboard.length === 0}><ContentPasteOutlinedIcon /></button>
+              <button title="Add (Modal)" onClick={() => { setChooserMode('modal'); setChooserOpen(true); }}><AddOutlinedIcon /></button>
+              <button title="Open Chooser (Non-Modal)" onClick={() => { setChooserMode('non-modal'); setChooserOpen(true); }}><OpenInNewOutlinedIcon /></button>
             </div>
             <div
               ref={mediaListRef}

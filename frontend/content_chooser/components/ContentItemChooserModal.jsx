@@ -194,8 +194,18 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items, chooser
   // ADDED: Drag start handler for items in non-modal mode
   const handleDragStartNonModal = (e, item) => {
     if (chooserMode === 'non-modal') {
-      e.dataTransfer.setData('application/json', JSON.stringify(item));
-      e.dataTransfer.effectAllowed = 'copy'; // Or 'link'
+      const realIdx = items.findIndex(i => i === item);
+      
+      // If the dragged item is part of the selection, drag all selected items
+      if (selected.includes(realIdx)) {
+        const selectedItems = selected.map(idx => items[idx]);
+        e.dataTransfer.setData('application/json', JSON.stringify(selectedItems));
+      } else {
+        // If dragging an unselected item, just drag that single item
+        e.dataTransfer.setData('application/json', JSON.stringify([item]));
+      }
+      
+      e.dataTransfer.effectAllowed = 'copy';
     }
   };
 
@@ -362,15 +372,17 @@ const ContentItemChooserModal = ({ onClose, onAdd, onAddAndClose, items, chooser
       {/* Footer */}
       <div className="chooser-footer">
         <span>{gridItems.length} items</span>
-        <div className="chooser-footer-btns">
-          <button onClick={onClose}>Cancel</button>
-          <button disabled={selected.length === 0} onClick={() => onAdd(selected)}>
-            Add
-          </button>
-          <button disabled={selected.length === 0} onClick={() => onAddAndClose(selected)}>
-            Add & Close
-          </button>
-        </div>
+        {chooserMode === 'modal' && (
+          <div className="chooser-footer-btns">
+            <button onClick={onClose}>Cancel</button>
+            <button disabled={selected.length === 0} onClick={() => onAdd(selected)}>
+              Add
+            </button>
+            <button disabled={selected.length === 0} onClick={() => onAddAndClose(selected)}>
+              Add & Close
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
