@@ -56,7 +56,7 @@ jobs:
           
       - name: Build
         working-directory: frontend/content_chooser
-        run: pnpm run build
+        run: pnpm run build --public-url ./
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
